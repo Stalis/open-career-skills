@@ -13,6 +13,7 @@ The contract for every surface in this workspace. Paths are relative to the repo
 | `mock-interviewer` | interview practice/rehearsal | profile, story bank, tracker, past debriefs | `output/interview-feedback-<role>-<date>.md` | One question per message; debrief rewrites built only from things you actually said |
 | `job-search` | find jobs, new positions | profile, `portals.md`, tracker | conversational list + search URLs | Only reports postings actually fetched or pasted; blocked boards get URLs, not guesses |
 | `evidence-miner` | mine repos for achievements | your git repos (read-only), `gh` | `story-bank/*.md` with `## Evidence` | No citable artifact, no proposal; business impact numbers come from you, never inferred from code |
+| `ats-detective` | which ATS does X use; how to beat a named ATS | company name or posting URL; public vendor board APIs | vendor + board URL + the 3-4 CV rules that change | Only reports a vendor it confirmed from a URL or a live board; a board whose declared name disagrees is rejected; unprobeable vendors are reported as unprobeable, never as absent |
 
 ## Commands (`.claude/commands/`)
 
@@ -28,6 +29,7 @@ The contract for every surface in this workspace. Paths are relative to the repo
 | `/apply [URL or JD]` | Full pipeline: evaluate, draft, review, track | optimizer + letter + `application-reviewer` agent |
 | `/upskill [URL]` | Recurring-gap analysis and learning plan | - |
 | `/mine-evidence [repo paths]` | Achievement harvesting | `evidence-miner` + `star-story-extractor` |
+| `/detect-ats [company or URL]` | Identify the ATS and its CV rules | `ats-detective` |
 
 ## Agents (`.claude/agents/`)
 

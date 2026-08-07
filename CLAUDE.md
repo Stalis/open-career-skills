@@ -36,6 +36,7 @@ Corollary (groundedness): every factual claim in a generated asset must trace to
 | Find current job postings | `job-search` skill (or `/find-jobs`) |
 | Apply to a specific job end-to-end | `/apply <url or JD>` (fit gate, drafts, reviewer, tracker) |
 | Mine git history for achievements | `evidence-miner` skill (or `/mine-evidence`) |
+| Which ATS a company uses, and the CV rules it implies | `ats-detective` skill (or `/detect-ats`) |
 | Recurring skill gaps / what to learn | `/upskill` |
 | Build/refresh the profile | `/setup` |
 

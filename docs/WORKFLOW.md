@@ -1,6 +1,6 @@
 # The workflow
 
-The workspace strings seven skills into one loop. You can enter anywhere, but this is the intended shape:
+The workspace strings eight skills into one loop. You can enter anywhere, but this is the intended shape:
 
 ```
  /setup            /mine-evidence           /find-jobs
@@ -14,8 +14,9 @@ The workspace strings seven skills into one loop. You can enter anywhere, but th
                                     v
                               /apply <url>
                                     |
-                    Step 1: FIT EVALUATION  [HARD STOP]
-                    honest score + gaps; "proceed?"
+                    Step 1: ELIGIBILITY GATE, then
+                    FIT EVALUATION  [HARD STOP]
+                    blockers first, then score + gaps
                                     |
                     Step 2: DRAFT (cv-optimizer [HARD STOP
                     for your answers] + cover letter)
@@ -44,6 +45,7 @@ The workspace strings seven skills into one loop. You can enter anywhere, but th
 | /extract-story | your braindump | `story-bank/*.md` |
 | /find-jobs | profile, `portals.md`, tracker (dedup) | nothing (conversational) |
 | /apply | profile, story bank, the JD | `output/apply-<company>/{cv,cover-letter,fit-evaluation}.md`, tracker row |
+| /detect-ats | a company name or posting URL; public vendor board APIs | nothing (conversational) |
 | /mock-interview | profile, story bank, tracker, past debriefs | `output/interview-feedback-*.md` |
 | /upskill | all `fit-evaluation.md` files, tracker, profile | `output/upskill-report-*.md` |
 | /plan-content, /cover-letter | profile, story bank | `output/`, `content/calendar.md` |
@@ -52,7 +54,7 @@ The workspace strings seven skills into one loop. You can enter anywhere, but th
 
 Two places the pipeline deliberately ends its turn and waits for you:
 
-1. **After the fit evaluation.** Applying costs energy; a Weak Fit deserves a conscious "yes anyway" or a guilt-free skip (logged as `evaluated`).
+1. **After the fit evaluation.** Applying costs energy; a Weak Fit deserves a conscious "yes anyway" or a guilt-free skip (logged as `evaluated`). The eligibility gate runs BEFORE the score and can stop the pipeline on its own: a hard blocker (no sponsorship, unreachable location, a language you do not have) is not something a weighted average should be allowed to dilute, and finding it after you have drafted a CV is finding it too late.
 2. **After the CV diagnosis questions.** The optimizer asks about suspect numbers and empty bullets instead of inventing. Your answers are folded in verbatim; skipped questions mean the claim ships without the number, never with a made-up one.
 
 The reviewer stage is not a stop but a check: an independent subagent receives the raw drafts and flags any claim it cannot trace to your profile, stories, or answers (the groundedness audit). Unsourced claims get removed or asked about, never "fixed".

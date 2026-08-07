@@ -24,6 +24,7 @@ Run them locally in Claude Code or Claude Desktop, on your own subscription, wit
 | **mock-interviewer** | A pressure-tested rehearsal, one question at a time | Stays in character, interrupts rambling, drills "what did YOU do?", then debriefs against structure / specificity / ownership / quantification. |
 | **job-search** | Finds current postings matching your profile | Zero dependencies; only reports jobs it actually fetched or you pasted. Blocked boards get you ready-made search URLs, never invented listings. |
 | **evidence-miner** | Harvests real achievements from your git history into the story bank | Groundedness rule: no citable artifact (commits, PRs, dates), no proposed achievement. Business impact numbers come from you, never inferred from code. |
+| **ats-detective** | Works out which Applicant Tracking System a company runs, and the CV rules that follow | Confirms the vendor from the posting URL or a live public board API, never from a guess. A board whose declared name disagrees with the company is rejected, and "could not probe" is never reported as "not present". |
 
 ## The /apply pipeline
 
