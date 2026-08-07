@@ -13,7 +13,7 @@ Generic AI career advice gets people rejected: polished emptiness, invented metr
 
 Run them locally in Claude Code or Claude Desktop, on your own subscription, with your data on your machine.
 
-## The seven skills
+## The eight skills
 
 | Skill | What it does | The rule that makes it different |
 |---|---|---|
