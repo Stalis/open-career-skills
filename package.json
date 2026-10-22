@@ -1,0 +1,8 @@
+{
+  "name": "open-career-skills-local-tools",
+  "private": true,
+  "description": "Project-local tools for the Codex career workspace",
+  "dependencies": {
+    "hirify-cli": "0.6.6"
+  }
+}

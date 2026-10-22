@@ -1,0 +1,14 @@
+#!/bin/sh
+set -eu
+
+root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd -P)
+case "${1-}" in
+  init|skill|update)
+    printf '%s\n' 'This command can install or update outside the project. Use npm install in the project to manage Hirify.' >&2
+    exit 1
+    ;;
+esac
+export XDG_CONFIG_HOME="$root/.hirify/config"
+export HIRIFY_NO_AUTO_UPDATE=1
+unset HIRIFY_VERSION_PIN
+exec "$root/node_modules/.bin/hirify" "$@"

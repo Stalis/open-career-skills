@@ -66,4 +66,10 @@ Run `python3 -m unittest discover -s tests` for deterministic helper checks and 
 
 ## Local dependencies
 
-Install Python dependencies only in this repository’s ignored `.venv/` when needed. Install Hirify only within the repository, never as a global package. Record commands and versions after verifying the official distribution and its actual local-install support.
+Install Python dependencies only in this repository’s ignored `.venv/` when needed.
+
+### Hirify CLI (optional)
+
+The official [Hirify CLI](https://github.com/hirifyme/hirify-cli) is pinned to `hirify-cli` 0.6.6 in `package.json` and `package-lock.json`. Node 18 or newer and npm are required. Install locally with `npm ci --ignore-scripts --no-audit --no-fund --cache ./tmp/npm-cache`. The installed `node_modules/`, npm cache and `.hirify/` configuration are ignored. Use `./scripts/hirify` from the repository root: it disables automatic updates and directs configuration and saved credentials to `.hirify/config/`. Do not use `init`, `skill`, `update`, a global install, or the direct binary: those may install or configure outside this workspace. To upgrade, deliberately change the pinned dependency and lockfile with npm, then verify the new version.
+
+The user must explicitly authorize account access before signing in; they can run `./scripts/hirify login` themselves and confirm in the browser. Never copy credentials into chat or tracked files. `./scripts/hirify auth status --json` checks local sign-in without exposing the credential. An inherited `HIRIFY_KEY` takes precedence over the project-local sign-in; handle it as a secret. Use `./scripts/hirify intro`, `filter guide` and command help to check current server guidance, filters and output before searching, subject to this workspace's rules. Search cards are not full job descriptions; label coverage and fetch the available full text when needed. Check current allowances before metered reads or reveals. Generic API calls can also consume allowances or modify account state. Follow the explicit request and confirmation rule for account changes and applications, and show the exact application before submission. On uncertain outcomes, check before retrying. If authentication or access is unavailable, report the limitation and use other sources.
