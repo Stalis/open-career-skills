@@ -1,9 +1,8 @@
-# Application Tracker (template)
+# Application Tracker
 
-<!-- Copy this file to tracker/applications.md (git-ignored) before using.
-     The /apply pipeline does this for you automatically on first run. -->
+Copy to `tracker/applications.md`; this template contains no personal data.
 
-Status values: evaluated / applied / interviewing / offer / rejected / dropped
+States: INBOX, EVALUATED, DRAFTING, IN_REVIEW, READY_TO_APPLY, APPLIED, INTERVIEWING, OFFER, REJECTED, DROPPED. APPLIED requires confirmed actual submission and its date.
 
-| Date | Company | Role | Fit | Status | Next step | Assets |
-|---|---|---|---|---|---|---|
+| Date | Company | Role | Fit | Status | Eligibility | Next step | Assets |
+|---|---|---|---|---|---|---|---|

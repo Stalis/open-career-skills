@@ -19,5 +19,15 @@ output/*
 # Local user documents (create this folder for CV exports etc.)
 documents/
 
+# Temporary local files
+tmp/
+
 # OS noise
 .DS_Store
+
+# Python test artifacts
+__pycache__/
+*.pyc
+
+# Project-local Python environment
+.venv/

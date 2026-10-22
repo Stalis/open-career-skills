@@ -1,3 +1,5 @@
+> **Codex Desktop:** See [Codex workspace guide](docs/CODEX.md) for repo skills, privacy, application status and current limitations. The Claude workflow below remains the upstream reference.
+
 <picture>
   <img src="assets/banner.svg" alt="Open Career Skills: Claude skills for the job hunt that refuse to invent facts about you" width="100%">
 </picture>
