@@ -6,10 +6,104 @@
 
 # Open Career Skills
 
-**The prompt architecture behind [JobMentis](https://jobmentis.com/en/claude-skills-for-job-hunting?ref=oss-readme), open-sourced as installable Claude skills.**
+**The prompt architecture behind [JobMentis](https://jobmentis.com/en/claude-skills-for-job-hunting?ref=oss-readme), open-sourced as installable Claude skills — extended in this fork into a deterministic, multi-agent career workspace for Codex, Claude Code, and Antigravity.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
+## How This Fork Works (Codex, Claude Code & Antigravity)
+
+While the upstream repository targets Claude Code with single-pass markdown outputs, this fork layers a **strict provenance, deterministic state, and bounded multi-round review architecture** on top of the untouched `.claude/` upstream prompts. You can switch freely between **Codex**, **Claude Code**, and **Antigravity** on the exact same local career data without path or state drift.
+
+```mermaid
+flowchart TD
+    subgraph Agents["1. Multi-Agent Entry Layer"]
+        Codex["Codex (AGENTS.md + .agents/skills/ocs-*)"]
+        AGY["Antigravity (AGENTS.md + .agents/skills/ocs-*)"]
+        Claude["Claude Code (CLAUDE.md + /commands & ocs-*)"]
+        Contract["Workspace Contract (docs/CODEX.md + docs/REVIEW_CYCLE.md)"]
+        Upstream["Unchanged Upstream Prompts (.claude/commands, skills, agents)"]
+        Codex --> Contract
+        AGY --> Contract
+        Claude --> Contract
+        Contract -. "overrides paths, states & review" .-> Upstream
+    end
+
+    subgraph Intake["2. Source Intake, Provenance & Master Resumes"]
+        RawDocs["Original DOCX / XLSX / PDF + Git Repos"]
+        IntakePy["scripts/intake.py (SHA-256 copy + cell/paragraph extraction)"]
+        Sources["profile/sources.md + profile/intake.md (Epistemic labels)"]
+        Profile["profile/profile.md + story-bank/*.md"]
+        Masters["output/master-resumes/{backend-fullstack,platform-devops-sre}.md"]
+        CheckMaster["scripts/check_master.py (SHA-256 freshness gate)"]
+        RawDocs --> IntakePy --> Sources --> Profile --> Masters --> CheckMaster
+    end
+
+    subgraph Discovery["3. Job Discovery & Deterministic Application Identity"]
+        JobInputs["Manual JD / URL, Portals, or ./scripts/hirify"]
+        Inbox["tracker/inbox.md (Dedup by canonical URL / source ID)"]
+        AppPy["scripts/application.py init"]
+        AppDir["output/applications/<company>-<role>-<hash>/ (identity.json, job.md, status.md)"]
+        JobInputs --> Inbox --> AppPy --> AppDir
+    end
+
+    subgraph Evaluation["4. Eligibility Gate & Mandatory Interactive Pauses"]
+        Elig["Eligibility First (Remote, Serbia, B2B/Contractor, Visa, Language)"]
+        Fit["Weighted Fit Evaluation (fit-evaluation.md)"]
+        Stop1(["HARD STOP 1: User decides whether to draft"])
+        OptP1["Requirement Mapping + Optimizer Phase 1 Questions"]
+        Stop2(["HARD STOP 2: User answers or skips questions"])
+        AppDir --> Elig --> Fit --> Stop1 --> OptP1 --> Stop2
+    end
+
+    subgraph ReviewCycle["5. Bounded 3-Round Text Review Cycle (scripts/review_cycle.py)"]
+        Draft["Draft cv.md + facts.md (Transport bundle with source locations)"]
+        Snap["review_cycle.py start / snapshot (Immutable SHA-256 manifest)"]
+        Subagent["Fresh Independent Reviewer Subagent per Round (Task / Codex Subagent / invoke_subagent)"]
+        Record["review_cycle.py record (Validates hashes, fresh reviewer_id & round cap <= 3)"]
+        Stop2 --> Draft --> Snap --> Subagent --> Record
+        Record -- "outcome: revise (round 1 or 2)" --> Draft
+        Record -- "outcome: needs_input (user adds new facts)" --> OptP1
+    end
+
+    subgraph FinalGate["6. Handoff, DOCX/PDF Rendering & Final Gate"]
+        TextHandoff["User inspects reviewed Markdown (passed / plateau / limit_reached)"]
+        Render["Render from documents/templates/*.docx (Unbulleted paragraphs + visual/PDF check)"]
+        FinalRev["Fresh Independent Final Review (final-review.md with render hashes)"]
+        Ready["State: READY_TO_APPLY (tracker/applications.md + status.md)"]
+        Applied["State: APPLIED (Only after explicit user confirmation + submission date)"]
+        Record -- "passed / plateau / limit_reached" --> TextHandoff --> Render --> FinalRev --> Ready --> Applied
+    end
+```
+
+### Key Enhancements Over Upstream
+
+1. **Cross-Agent Compatibility without Upstream Drift**
+   - **`.claude/` stays untouched** so upstream updates merge cleanly.
+   - **[AGENTS.md](AGENTS.md)** (loaded automatically by Codex and Antigravity) and **[CLAUDE.md](CLAUDE.md)** (loaded automatically by Claude Code) apply the rules in **[docs/CODEX.md](docs/CODEX.md)** and **[docs/REVIEW_CYCLE.md](docs/REVIEW_CYCLE.md)**.
+   - Nine `ocs-*` skill adapters (`ocs-workspace`, `ocs-optimizer`, `ocs-stories`, `ocs-evidence`, `ocs-jobs`, `ocs-ats`, `ocs-letter`, `ocs-interview`, `ocs-linkedin`) live in `.agents/skills/` and `codex/skills/` (kept byte-for-byte identical and verified by `tests/test_workspace_compat.py`).
+
+2. **Auditable Source Intake & Master Resumes**
+   - **`python3 scripts/intake.py <file>...`** copies selected DOCX/XLSX files into content-addressed `documents/sources/` and extracts text with exact paragraph or sheet/cell coordinates.
+   - Every fact in `profile/profile.md` and `story-bank/*.md` carries provenance (`profile/sources.md`, `profile/intake.md`) and an epistemic status (`in source`, `candidate confirmed`, `conflict`, or `unknown`). Disputed facts are excluded until resolved.
+   - Two directional master resumes (`output/master-resumes/backend-fullstack.md` and `output/master-resumes/platform-devops-sre.md`) embed SHA-256 hashes of all source files; **`python3 scripts/check_master.py`** flags `STALE` inputs before reuse.
+
+3. **Deterministic Application Identity & 10-State Pipeline**
+   - **`python3 scripts/application.py init --company ... --role ... --url ... [--source-id ...]`** normalizes URLs (stripping tracking parameters) and creates a stable folder `output/applications/<company>-<role>-<hash>/` with `identity.json`, `job.md`, and `status.md`.
+   - Eligibility precedes fit scoring and explicitly tracks **international remote**, **work from Serbia**, and **B2B/contractor** status (`confirmed`, `unknown`, `not eligible`) alongside work authorization, location, and language.
+   - Applications follow a strict 10-state machine in `status.md` and `tracker/applications.md`: `INBOX`, `EVALUATED`, `DRAFTING`, `IN_REVIEW`, `READY_TO_APPLY`, `APPLIED`, `INTERVIEWING`, `OFFER`, `REJECTED`, `DROPPED`. Opening a form or generating files never sets `APPLIED` — only explicit user confirmation with a submission date does.
+
+4. **Bounded 3-Round Independent Review Cycle & Two-Stage Gate**
+   - **`python3 scripts/review_cycle.py`** (`start`, `snapshot`, `record`, `status`) manages an immutable, lock-protected audit journal under `output/applications/<app>/review-cycles/<cycle>/rounds/<round>/`.
+   - Each round snapshots `cv.md`, `job.md`, `facts.md`, and all underlying source files with SHA-256 manifests, then dispatches a **fresh independent reviewer subagent** (`Task`/`Agent` in Claude Code, a fresh subagent in Codex, or `invoke_subagent` in Antigravity) with defanged `<job_description>` fences.
+   - The helper enforces at most **3 review rounds per cycle**, requires a distinct `reviewer_id` per round, and invalidates stale snapshots if live inputs change (`exit code 2`).
+   - **Two-stage readiness**: after the Markdown text cycle completes, the user reviews the text first. Only then is the CV rendered from the reference template in `documents/templates/` into DOCX/PDF (using separate unbulleted experience paragraphs) and audited in a separate `final-review.md` before `READY_TO_APPLY`.
+
+5. **Sandboxed Local Tooling & Verification**
+   - **Optional Hirify CLI (`./scripts/hirify`)**: pinned to `hirify-cli` in `package.json`, storing config and credentials strictly inside git-ignored `.hirify/config/` with auto-updates disabled.
+   - **Automated test suite (`python3 -m unittest discover -s tests`)**: 29 deterministic unit tests covering DOCX/XLSX intake, canonical URL & source-ID deduplication, the 3-round review state machine, skill sync, and `.gitignore` privacy guards.
+
+---
 
 Generic AI career advice gets people rejected: polished emptiness, invented metrics, "results-driven professional" boilerplate that recruiters spot in three seconds. These skills are built the opposite way. Their defining behavior is that they **ask you a question rather than invent a fact about you**, and they enforce the writing craft (plain verbs, real numbers, say-it-out-loud naturalness) that survives both ATS parsers and human readers.
 
