@@ -1,4 +1,4 @@
-> **Codex Desktop:** See [Codex workspace guide](docs/CODEX.md) for repo skills, privacy, application status and current limitations. The Claude workflow below remains the upstream reference.
+> **Codex, Claude Code & Antigravity:** See the [workspace contract](docs/CODEX.md) and [bounded review-cycle protocol](docs/REVIEW_CYCLE.md) (plus `AGENTS.md` and `CLAUDE.md`) for unified repo skills, privacy, application identity/status, and independent review across all three environments. `.claude/` remains the unchanged upstream reference.
 
 <picture>
   <img src="assets/banner.svg" alt="Open Career Skills: Claude skills for the job hunt that refuse to invent facts about you" width="100%">
