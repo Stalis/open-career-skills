@@ -1,0 +1,2 @@
+# Optional dependency for scripts/check_export.py PDF extraction.
+pypdf==6.21.3

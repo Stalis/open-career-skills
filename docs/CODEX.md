@@ -68,6 +68,8 @@ Allowed states: `INBOX`, `EVALUATED`, `DRAFTING`, `IN_REVIEW`, `READY_TO_APPLY`,
 
 ## Verification and privacy
 
+Before final document review run the export text check described in [EXPORT_CHECK.md](EXPORT_CHECK.md) against both final PDF and DOCX. Use a candidate-checked plain-text transcript of the approved CV, preserving intended reading order. Store the private JSON report, inspect every discrepancy, and give the report and its input/output hashes to the final reviewer. FAIL or ERROR blocks readiness until resolved; PASS checks normalized text fidelity only and does not establish ATS compatibility, visual correctness, or independent review. Re-run on any changed input or export with a new report filename.
+
 Run `python3 -m unittest discover -s tests` for deterministic helper checks and `git check-ignore` on private files. These tests cannot prove interactive pauses, model quality, Desktop discovery, independent review or visual rendering; validate those in a separate synthetic session. On completion inspect `git status --short` and do not force-add private data. Desktop browser and Finder access vary by environment; if unavailable, provide a local path and ask the user to open links or provide text.
 
 ## Local dependencies
