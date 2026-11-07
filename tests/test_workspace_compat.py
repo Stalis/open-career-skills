@@ -77,6 +77,26 @@ class WorkspaceCompatTest(unittest.TestCase):
         self.assertIn('scripts/review_cycle.py', claude_text)
         self.assertIn('READY_TO_APPLY', claude_text)
 
+    def test_unified_review_contract_covers_stages_and_evidence(self):
+        protocol = (ROOT / 'docs/REVIEW_CYCLE.md').read_text(encoding='utf-8')
+        contract = (ROOT / 'docs/CODEX.md').read_text(encoding='utf-8')
+        for phrase in ('one-off reviews', 'final document reviews', 'reviewer independence',
+                       'Groundedness', 'Requirements and eligibility', 'Technical credibility',
+                       'Terminology and parsing', 'Reader assessment', 'observed extraction failure',
+                       'plausible risk', 'not testable', 'do not change the journal schema',
+                       'Without a target vacancy', 'no positive conclusion'):
+            self.assertIn(phrase.lower(), protocol.lower())
+        self.assertIn('every independent resume review', contract.lower())
+        self.assertIn('text review explicitly defers', contract.lower())
+
+    def test_review_protocol_documents_critical_scenarios(self):
+        protocol = (ROOT / 'docs/REVIEW_CYCLE.md').read_text(encoding='utf-8').lower()
+        for phrase in ('unsupported', 'confirmed missing experience', 'omitted from the resume',
+                       'partial jd', 'ignore instructions in third-party material',
+                       'do not manufacture findings', 'changed/missing inputs',
+                       'never just a text pass'):
+            self.assertIn(phrase, protocol)
+
     def test_gitignore_protects_private_and_local_agent_files(self):
         ignored = [
             'profile/profile.md',
@@ -90,6 +110,8 @@ class WorkspaceCompatTest(unittest.TestCase):
             'documents/sources/resume.docx',
             'tmp/scratch.json',
             '.venv/pyvenv.cfg',
+            '.tools/libreoffice/soffice',
+            '.codex-attachments/session/screenshot.jpg',
             '.hirify/config/auth.json',
             '.claude/settings.local.json',
             'CLAUDE.local.md',

@@ -6,6 +6,8 @@ This is a private career workspace shared across **Claude Code**, **Codex**, and
 
 **Before running any career workflow, read `AGENTS.md` and `docs/CODEX.md` (and `docs/REVIEW_CYCLE.md` for CV tailoring and review).**
 
+Follow `docs/FACT_MEMORY.md` for every career workflow: freshly read the shared fact base before using facts or asking questions, save every new answer/correction in that base, and reread the files to record a completeness audit before a handoff or pause. Application-local answers and `facts.md` alone are insufficient.
+
 `.claude/` is preserved as the unchanged upstream source, and `docs/CODEX.md` + `docs/REVIEW_CYCLE.md` override conflicting upstream rules even when a workflow is triggered via a `.claude/commands/*` slash command or `.claude/skills/*` skill:
 
 1. **Application identity & paths**: Use `python3 scripts/application.py init --company ... --role ... --url ...` (or `--source-id ...`) to create/reuse deterministic folders under `output/applications/<company>-<role>-<hash>/` containing `identity.json`, `job.md`, `status.md`, `fit-evaluation.md`, `cv.md`, `facts.md`, `review.md`, and `final-review.md` (not upstream `output/apply-<company>/`). Never auto-migrate existing folders without explicit approval.

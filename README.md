@@ -101,7 +101,7 @@ flowchart TD
 
 5. **Sandboxed Local Tooling & Verification**
    - **Optional Hirify CLI (`./scripts/hirify`)**: pinned to `hirify-cli` in `package.json`, storing config and credentials strictly inside git-ignored `.hirify/config/` with auto-updates disabled.
-   - **Automated test suite (`python3 -m unittest discover -s tests`)**: 29 deterministic unit tests covering DOCX/XLSX intake, canonical URL & source-ID deduplication, the 3-round review state machine, skill sync, and `.gitignore` privacy guards.
+   - **Automated test suite (`python3 -m unittest discover -s tests`)**: 49 deterministic unit tests covering DOCX/XLSX intake, canonical URL & source-ID deduplication, provenance checks, the 3-round review state machine, skill sync, and `.gitignore` privacy guards.
 
 ---
 
