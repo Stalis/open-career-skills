@@ -105,6 +105,16 @@ class ReviewCycleTest(unittest.TestCase):
         self.assertEqual(state['state'], 'incomplete_package')
         self.assertIsNone(state['reviewed_cv'])
 
+    def test_stale_review_unavailable_must_be_recorded_as_incomplete_package(self):
+        self.start()
+        self.snapshot()
+        (self.app / 'cv.md').write_text('Changed after snapshot')
+        result = self.receipt('review_unavailable')
+        result['reviewer_id'] = None
+        with self.assertRaises(ValueError):
+            self.record(receipt=result)
+        self.assertEqual(self.record('incomplete_package')['state'], 'incomplete_package')
+
     def test_new_facts_preserve_old_history(self):
         self.start()
         self.snapshot()
@@ -239,6 +249,18 @@ class ReviewCycleTest(unittest.TestCase):
             result.update(change)
             with self.assertRaises(ValueError):
                 self.record(receipt=result)
+
+    def test_failure_receipt_cannot_reuse_non_null_reviewer_id(self):
+        self.start()
+        self.snapshot()
+        self.record(receipt=self.receipt('passed', 'agent-a'))
+        evidence = self.app / 'restart.md'
+        evidence.write_text('User requested another review')
+        self.start(reason='user_requested', evidence=evidence)
+        self.snapshot()
+        result = self.receipt('incomplete_package', 'agent-a')
+        with self.assertRaisesRegex(ValueError, 'fresh independent reviewer'):
+            self.record(receipt=result)
 
     def test_manifest_change_after_review_invalidates(self):
         self.start()

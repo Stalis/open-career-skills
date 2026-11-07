@@ -6,12 +6,20 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-PATTERN = re.compile(r'^- `([^`]+)` `([0-9a-f]{64})`$', re.M)
+RECORD = re.compile(r'^- `([^`]+)` `([^`]*)`(.*)$')
+HASH = re.compile(r'^[0-9a-f]{64}$')
 
 
 def check(path):
     text = path.read_text(encoding='utf-8')
-    records = PATTERN.findall(text)
+    records = []
+    for line in text.splitlines():
+        match = RECORD.match(line)
+        if match:
+            name, expected, trailing = match.groups()
+            if trailing or not HASH.fullmatch(expected):
+                raise ValueError(f'Malformed source fingerprint: {line}')
+            records.append((name, expected))
     if not records:
         raise ValueError('No source fingerprints found')
     changed = []

@@ -2,8 +2,9 @@
 """Copy selected DOCX/XLSX sources and extract locatable text, without interpreting it."""
 import argparse
 import hashlib
+import io
 import json
-import shutil
+import posixpath
 import zipfile
 from datetime import date
 from pathlib import Path
@@ -16,6 +17,24 @@ R = '{http://schemas.openxmlformats.org/officeDocument/2006/relationships}'
 P = '{http://schemas.openxmlformats.org/package/2006/relationships}'
 
 
+
+
+def paragraph_text(paragraph):
+    parts = []
+
+    def collect(element):
+        if element is not paragraph and element.tag == W + 'p':
+            return
+        if element.tag == W + 't':
+            parts.append(element.text or '')
+        elif element.tag in (W + 'tab', W + 'br', W + 'cr'):
+            parts.append(' ')
+        else:
+            for child in element:
+                collect(child)
+
+    collect(paragraph)
+    return ''.join(parts)
 def docx(z):
     document = ET.fromstring(z.read('word/document.xml'))
     body = document.find(W + 'body')
@@ -23,7 +42,7 @@ def docx(z):
     if body is None:
         raise ValueError('Missing document body')
     for i, paragraph in enumerate(body.iter(W + 'p'), 1):
-        value = ''.join(x.text or '' for x in paragraph.iter(W + 't'))
+        value = paragraph_text(paragraph)
         if value.strip():
             entries.append({'location': f'body paragraph {i}', 'text': value})
     warnings = ['Paragraph numbers are XML order, not page numbers; page layout is not extracted.',
@@ -48,7 +67,6 @@ def xlsx(z):
             continue
         target = target.lstrip('/') if target.startswith('/') else 'xl/' + target
         # OOXML relationship targets may include relative segments.
-        import posixpath
         target = posixpath.normpath(target)
         if not target.startswith('xl/') or target not in z.namelist():
             warnings.append(f'Sheet {name}: content unavailable')
@@ -60,7 +78,11 @@ def xlsx(z):
             text = v.text if v is not None else None
             typ = c.get('t')
             if typ == 's' and text is not None:
-                try: text = shared[int(text)]
+                try:
+                    index = int(text)
+                    if not 0 <= index < len(shared):
+                        raise IndexError
+                    text = shared[index]
                 except (ValueError, IndexError):
                     warnings.append(f'Sheet {name} cell {ref}: invalid shared string')
                     text = None
@@ -78,15 +100,17 @@ def extract(root, source):
     source = Path(source)
     if not source.is_file() or source.suffix.lower() not in ('.docx', '.xlsx'):
         raise ValueError('Select an existing .docx or .xlsx file')
-    digest = hashlib.sha256(source.read_bytes()).hexdigest()
-    with zipfile.ZipFile(source) as z:
+    data = source.read_bytes()
+    digest = hashlib.sha256(data).hexdigest()
+    with zipfile.ZipFile(io.BytesIO(data)) as z:
         entries, warnings = docx(z) if source.suffix.lower() == '.docx' else xlsx(z)
     dest = root / 'documents' / 'sources'
     dest.mkdir(parents=True, exist_ok=True)
     original = dest / (digest[:16] + source.suffix.lower())
     if original.exists() and hashlib.sha256(original.read_bytes()).hexdigest() != digest:
         raise ValueError('Source ID collision')
-    if not original.exists(): shutil.copyfile(source, original)
+    if not original.exists():
+        original.write_bytes(data)
     result = {'id': digest[:16], 'sha256': digest, 'original_name': source.name,
               'original_copy': str(original.relative_to(root)), 'received': date.today().isoformat(),
               'coverage': 'partial', 'warnings': warnings, 'entries': entries}

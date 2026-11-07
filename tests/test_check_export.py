@@ -24,13 +24,15 @@ class ExportTest(unittest.TestCase):
                 archive.writestr('word/document.xml', '''<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>
                 <w:p><w:r><w:t>Jane </w:t></w:r><w:r><w:t>Doe</w:t></w:r></w:p>
                 <w:tbl><w:tr><w:tc><w:p><w:r><w:t>C# 2024</w:t></w:r></w:p></w:tc></w:tr></w:tbl>
+                <w:p><w:r><w:t>Python</w:t><w:tab/><w:t>SQL</w:t><w:br/><w:t>2024</w:t></w:r></w:p>
+                <w:p><w:r><w:txbxContent><w:p><w:r><w:t>Hello Box</w:t></w:r></w:p></w:txbxContent></w:r></w:p>
                 </w:body></w:document>''')
             expected = root / 'approved.txt'
-            expected.write_text('Jane Doe\nC# 2024')
+            expected.write_text('Jane Doe\nC# 2024\nPython SQL 2024\nHello Box')
             report = root / 'report.json'
             self.assertEqual(ce.main(['--expected', str(expected), '--export', str(doc), '--report', str(report)]), 0)
             result = json.loads(report.read_text())
-            self.assertEqual(result['exports'][0]['sha256'], ce.sha(doc))
+            self.assertEqual(result['exports'][0]['sha256'], ce.sha(doc.read_bytes()))
             with self.assertRaises(SystemExit):
                 ce.main(['--expected', str(expected), '--export', str(doc), '--report', str(report)])
 
@@ -41,6 +43,17 @@ class ExportTest(unittest.TestCase):
             report = root / 'report.json'
             self.assertEqual(ce.main(['--expected', str(root / 'approved.txt'), '--export', str(root / 'missing.pdf'), '--report', str(report)]), 2)
             self.assertEqual(json.loads(report.read_text())['status'], 'ERROR')
+
+    def test_report_write_failure_returns_error_code(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            expected = root / 'approved.txt'
+            expected.write_text('Jane Doe')
+            blocked_parent = root / 'not-a-directory'
+            blocked_parent.write_text('block')
+            result = ce.main(['--expected', str(expected), '--export', str(expected),
+                              '--report', str(blocked_parent / 'report.json')])
+            self.assertEqual(result, 2)
 
     def test_pdf_text_layer_and_empty_page(self):
         try:

@@ -308,9 +308,9 @@ def record(app, result, root=ROOT):
         if state['state'] != 'awaiting_review':
             raise ValueError('No pending round; existing results cannot be overwritten')
         validate_result(result, state['manifest_sha256'])
-        if state['changes'] and result['outcome'] not in FAILURES:
+        if state['changes'] and result['outcome'] != 'incomplete_package':
             raise ValueError('Inputs changed since snapshot; record incomplete_package before restarting')
-        if result['outcome'] not in FAILURES:
+        if result['reviewer_id'] is not None:
             for path in (app / 'review-cycles').glob('*/rounds/*/result/result.json'):
                 if read_json(path)['reviewer_id'] == result['reviewer_id']:
                     raise ValueError('Use a fresh independent reviewer for each round')

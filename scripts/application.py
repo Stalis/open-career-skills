@@ -3,7 +3,9 @@
 import argparse
 import hashlib
 import json
+import os
 import re
+import tempfile
 import unicodedata
 from datetime import date
 from pathlib import Path
@@ -18,10 +20,12 @@ def canonical_url(value):
         raise ValueError('A valid HTTP(S) URL without credentials is required')
     host = parts.hostname.lower()
     port = parts.port
+    host = f'[{host}]' if ':' in host else host
     netloc = host if port is None or (parts.scheme.lower(), port) in (('http', 80), ('https', 443)) else f'{host}:{port}'
     query = [(k, v) for k, v in parse_qsl(parts.query, keep_blank_values=True)
              if not k.lower().startswith('utm_') and k.lower() not in ('ref', 'source', 'trk')]
-    return urlunsplit((parts.scheme.lower(), netloc, parts.path.rstrip('/') or '/', urlencode(sorted(query)), ''))
+    fragment = parts.fragment if parts.fragment.startswith(('/', '!')) else ''
+    return urlunsplit((parts.scheme.lower(), netloc, parts.path.rstrip('/') or '/', urlencode(sorted(query)), fragment))
 
 
 def slug(value):
@@ -56,15 +60,24 @@ def initialize(root, company, role, url=None, source_id=None):
             raise ValueError('Source ID already has a different URL; review possible duplicate')
         data['source_id'] = data.get('source_id') or source_id or None
         data['url'] = data.get('url') or normalized
-        (folder / 'identity.json').write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+        fd, temporary = tempfile.mkstemp(dir=folder, prefix='.identity-')
+        try:
+            with os.fdopen(fd, 'w', encoding='utf-8') as stream:
+                stream.write(json.dumps(data, ensure_ascii=False, indent=2) + '\n')
+            os.replace(temporary, folder / 'identity.json')
+        finally:
+            if os.path.exists(temporary):
+                os.unlink(temporary)
         return folder
     digest = hashlib.sha256(identity.encode()).hexdigest()[:16]
     folder = base / f'{slug(company)}-{slug(role)}-{digest}'
-    folder.mkdir(exist_ok=False)
     data = {'identity': identity, 'source_id': source_id or None, 'url': normalized}
-    (folder / 'identity.json').write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-    (folder / 'job.md').write_text(f'# Job\n\n- Source URL: {url or "not provided"}\n- Received: {date.today().isoformat()}\n- Coverage: unknown; full text not yet recorded\n\n## Available text\n', encoding='utf-8')
-    (folder / 'status.md').write_text('# Status\n\n- State: INBOX\n- Eligibility: unknown\n- Next step: record available job text and coverage\n', encoding='utf-8')
+    with tempfile.TemporaryDirectory(prefix='.pending-', dir=base) as temporary:
+        pending = Path(temporary)
+        (pending / 'identity.json').write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+        (pending / 'job.md').write_text(f'# Job\n\n- Source URL: {url or "not provided"}\n- Received: {date.today().isoformat()}\n- Coverage: unknown; full text not yet recorded\n\n## Available text\n', encoding='utf-8')
+        (pending / 'status.md').write_text('# Status\n\n- State: INBOX\n- Eligibility: unknown\n- Next step: record available job text and coverage\n', encoding='utf-8')
+        pending.rename(folder)
     return folder
 
 
