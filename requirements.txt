@@ -1,0 +1,14 @@
+# Runtime for document editing, PDF rendering and QA. Install with make install.
+lxml==6.0.2
+python-docx==1.2.0
+pypdf==6.21.3
+pdfplumber==0.11.10
+pypdfium2==5.9.0
+Pillow==12.2.0
+# Transitive pins keep fresh installs reproducible.
+cffi==2.1.1
+charset-normalizer==3.5.2
+cryptography==50.0.2
+pdfminer-six==20260107
+pycparser==3.12
+typing-extensions==4.16.0

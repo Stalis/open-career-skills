@@ -39,3 +39,9 @@ node_modules/
 # Local agent settings and overrides
 .claude/settings.local.json
 CLAUDE.local.md
+
+# Project-managed native applications, Python runtime, downloads and caches
+.tools/
+
+# Local attachments from agent conversations may contain personal data
+.codex-attachments/
