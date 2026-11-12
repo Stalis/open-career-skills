@@ -1,0 +1,15 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permission": {
+    "skill": {
+      "ats-detective": "deny",
+      "cover-letter-writer": "deny",
+      "evidence-miner": "deny",
+      "job-search": "deny",
+      "linkedin-360brew-planner": "deny",
+      "mock-interviewer": "deny",
+      "ruthless-cv-optimizer": "deny",
+      "star-story-extractor": "deny"
+    }
+  }
+}

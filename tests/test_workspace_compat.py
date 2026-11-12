@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 import subprocess
 import unittest
@@ -40,42 +41,40 @@ UPSTREAM_FILES = [
 
 
 class WorkspaceCompatTest(unittest.TestCase):
-    def test_agents_and_codex_skills_Stay_in_sync(self):
+    def test_ocs_skills_are_valid(self):
         agents_dir = ROOT / '.agents' / 'skills'
-        codex_dir = ROOT / 'codex' / 'skills'
-        agents_skills = {p.name for p in agents_dir.iterdir() if p.is_dir()}
-        codex_skills = {p.name for p in codex_dir.iterdir() if p.is_dir()}
-        self.assertEqual(agents_skills, EXPECTED_SKILLS)
-        self.assertEqual(codex_skills, EXPECTED_SKILLS)
+        self.assertEqual({p.name for p in agents_dir.iterdir() if p.is_dir()}, EXPECTED_SKILLS)
         for name in EXPECTED_SKILLS:
-            agent_skill = agents_dir / name / 'SKILL.md'
-            codex_skill = codex_dir / name / 'SKILL.md'
-            self.assertTrue(agent_skill.is_file(), f'Missing {agent_skill}')
-            self.assertTrue(codex_skill.is_file(), f'Missing {codex_skill}')
-            content = agent_skill.read_text(encoding='utf-8')
-            self.assertEqual(content, codex_skill.read_text(encoding='utf-8'), f'Drift in {name}/SKILL.md')
+            content = (agents_dir / name / 'SKILL.md').read_text(encoding='utf-8')
             self.assertIn(f'name: {name}\n', content)
             self.assertIn('description: ', content)
             self.assertIn('AGENTS.md', content)
             self.assertIn('docs/CODEX.md', content)
+
+    def test_entrypoints_load_single_agents_md(self):
+        self.assertEqual((ROOT / 'CLAUDE.md').read_text(encoding='utf-8').splitlines()[0], '@AGENTS.md')
+        self.assertFalse((ROOT / 'GEMINI.md').exists())
+        settings = json.loads((ROOT / '.gemini/settings.json').read_text(encoding='utf-8'))
+        self.assertEqual(settings['context']['fileName'], ['AGENTS.md'])
+        self.assertLess(len((ROOT / 'AGENTS.md').read_bytes()), 24000,
+                        'Antigravity truncates rule files above 24,000 bytes')
+        skill_rules = json.loads((ROOT / 'opencode.json').read_text(encoding='utf-8'))['permission']['skill']
+        denied = {name for name, action in skill_rules.items() if action == 'deny'}
+        upstream = {p.name for p in (ROOT / '.claude' / 'skills').iterdir() if p.is_dir()}
+        self.assertEqual(denied, upstream)
 
     def test_mapped_upstream_files_exist(self):
         for rel in UPSTREAM_FILES:
             self.assertTrue((ROOT / rel).is_file(), f'Missing upstream file: {rel}')
 
     def test_cross_platform_contracts_align(self):
-        for doc in ('AGENTS.md', 'CLAUDE.md', 'docs/CODEX.md', 'docs/REVIEW_CYCLE.md'):
+        for doc in ('AGENTS.md', 'docs/CODEX.md', 'docs/REVIEW_CYCLE.md'):
             text = (ROOT / doc).read_text(encoding='utf-8')
             for platform in ('Codex', 'Claude Code', 'Antigravity'):
                 self.assertIn(platform, text, f'{doc} should mention {platform}')
             if doc != 'docs/CODEX.md':
                 self.assertIn('docs/CODEX.md', text)
         self.assertIn('REVIEW_CYCLE.md', (ROOT / 'docs/CODEX.md').read_text(encoding='utf-8'))
-        claude_text = (ROOT / 'CLAUDE.md').read_text(encoding='utf-8')
-        self.assertIn('docs/REVIEW_CYCLE.md', claude_text)
-        self.assertIn('scripts/application.py', claude_text)
-        self.assertIn('scripts/review_cycle.py', claude_text)
-        self.assertIn('READY_TO_APPLY', claude_text)
 
     def test_unified_review_contract_covers_stages_and_evidence(self):
         protocol = (ROOT / 'docs/REVIEW_CYCLE.md').read_text(encoding='utf-8')
@@ -98,7 +97,7 @@ class WorkspaceCompatTest(unittest.TestCase):
             self.assertIn(phrase, protocol)
 
     def test_typst_pdf_default_and_optional_docx_align_across_agents(self):
-        for name in ('AGENTS.md', 'CLAUDE.md', 'GEMINI.md', 'docs/CODEX.md', 'docs/REVIEW_CYCLE.md'):
+        for name in ('AGENTS.md', 'docs/CODEX.md', 'docs/REVIEW_CYCLE.md'):
             text = (ROOT / name).read_text().lower()
             self.assertIn('typst', text, name)
             self.assertIn('docx', text, name)
@@ -138,7 +137,6 @@ class WorkspaceCompatTest(unittest.TestCase):
             'tracker/applications.template.md',
             'codex/templates/intake.template.md',
             '.agents/skills/ocs-workspace/SKILL.md',
-            'codex/skills/ocs-workspace/SKILL.md',
             '.claude/commands/apply.md',
         ]
         for rel in tracked:

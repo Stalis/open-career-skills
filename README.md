@@ -1,4 +1,4 @@
-> **Codex, Claude Code & Antigravity:** See the [workspace contract](docs/CODEX.md) and [bounded review-cycle protocol](docs/REVIEW_CYCLE.md) (plus `AGENTS.md` and `CLAUDE.md`) for unified repo skills, privacy, application identity/status, and independent review across all three environments. `.claude/` remains the unchanged upstream reference.
+> **Any coding agent:** `AGENTS.md` is the single instruction file (Claude Code imports it through `CLAUDE.md`, Gemini CLI through `.gemini/settings.json`). See the [workspace contract](docs/CODEX.md) and [bounded review-cycle protocol](docs/REVIEW_CYCLE.md). `.claude/` remains the unchanged upstream reference.
 
 <picture>
   <img src="assets/banner.svg" alt="Open Career Skills: Claude skills for the job hunt that refuse to invent facts about you" width="100%">
@@ -18,9 +18,9 @@ While the upstream repository targets Claude Code with single-pass markdown outp
 ```mermaid
 flowchart TD
     subgraph Agents["1. Multi-Agent Entry Layer"]
-        Codex["Codex (AGENTS.md + .agents/skills/ocs-*)"]
-        AGY["Antigravity (AGENTS.md + .agents/skills/ocs-*)"]
-        Claude["Claude Code (CLAUDE.md + /commands & ocs-*)"]
+        Codex["Codex / Cursor / OpenCode / Copilot (AGENTS.md + .agents/skills/ocs-*)"]
+        AGY["Antigravity / Gemini CLI (AGENTS.md + .agents/skills/ocs-*)"]
+        Claude["Claude Code (CLAUDE.md imports AGENTS.md + /commands)"]
         Contract["Workspace Contract (docs/CODEX.md + docs/REVIEW_CYCLE.md)"]
         Upstream["Unchanged Upstream Prompts (.claude/commands, skills, agents)"]
         Codex --> Contract
@@ -48,7 +48,7 @@ flowchart TD
     end
 
     subgraph Evaluation["4. Eligibility Gate & Mandatory Interactive Pauses"]
-        Elig["Eligibility First (Remote, Serbia, B2B/Contractor, Visa, Language)"]
+        Elig["Eligibility First (Remote, Residence Country, B2B/Contractor, Visa, Language)"]
         Fit["Weighted Fit Evaluation (fit-evaluation.md)"]
         Stop1(["HARD STOP 1: User decides whether to draft"])
         OptP1["Requirement Mapping + Optimizer Phase 1 Questions"]
@@ -80,22 +80,22 @@ flowchart TD
 
 1. **Cross-Agent Compatibility without Upstream Drift**
    - **`.claude/` stays untouched** so upstream updates merge cleanly.
-   - **[AGENTS.md](AGENTS.md)** (loaded automatically by Codex and Antigravity) and **[CLAUDE.md](CLAUDE.md)** (loaded automatically by Claude Code) apply the rules in **[docs/CODEX.md](docs/CODEX.md)** and **[docs/REVIEW_CYCLE.md](docs/REVIEW_CYCLE.md)**.
-   - Nine `ocs-*` skill adapters (`ocs-workspace`, `ocs-optimizer`, `ocs-stories`, `ocs-evidence`, `ocs-jobs`, `ocs-ats`, `ocs-letter`, `ocs-interview`, `ocs-linkedin`) live in `.agents/skills/` and `codex/skills/` (kept byte-for-byte identical and verified by `tests/test_workspace_compat.py`).
+   - **[AGENTS.md](AGENTS.md)** is the single contract loaded by every agent (Claude Code through the `@AGENTS.md` import in **[CLAUDE.md](CLAUDE.md)**); it applies the rules in **[docs/CODEX.md](docs/CODEX.md)** and **[docs/REVIEW_CYCLE.md](docs/REVIEW_CYCLE.md)**.
+   - Nine `ocs-*` skill adapters (`ocs-workspace`, `ocs-optimizer`, `ocs-stories`, `ocs-evidence`, `ocs-jobs`, `ocs-ats`, `ocs-letter`, `ocs-interview`, `ocs-linkedin`) live in `.agents/skills/` (validated by `tests/test_workspace_compat.py`).
 
 2. **Auditable Source Intake & Master Resumes**
-   - **`python3 scripts/intake.py <file>...`** copies selected DOCX/XLSX files into content-addressed `documents/sources/` and extracts text with exact paragraph or sheet/cell coordinates.
+   - **`.venv/bin/python scripts/intake.py <file>...`** copies selected DOCX/XLSX files into content-addressed `documents/sources/` and extracts text with exact paragraph or sheet/cell coordinates.
    - Every fact in `profile/profile.md` and `story-bank/*.md` carries provenance (`profile/sources.md`, `profile/intake.md`) and an epistemic status (`in source`, `candidate confirmed`, `conflict`, or `unknown`). Disputed facts are excluded until resolved.
-   - Two directional master resumes (`output/master-resumes/backend-fullstack.md` and `output/master-resumes/platform-devops-sre.md`) embed SHA-256 hashes of all source files; **`python3 scripts/check_master.py`** flags `STALE` inputs before reuse.
+   - Two directional master resumes (`output/master-resumes/backend-fullstack.md` and `output/master-resumes/platform-devops-sre.md`) embed SHA-256 hashes of all source files; **`.venv/bin/python scripts/check_master.py`** flags `STALE` inputs before reuse.
 
 3. **Deterministic Application Identity & 10-State Pipeline**
-   - **`python3 scripts/application.py init --company ... --role ... --url ... [--source-id ...]`** normalizes URLs (stripping tracking parameters) and creates a stable folder `output/applications/<company>-<role>-<hash>/` with `identity.json`, `job.md`, and `status.md`.
-   - Eligibility precedes fit scoring and explicitly tracks **international remote**, **work from Serbia**, and **B2B/contractor** status (`confirmed`, `unknown`, `not eligible`) alongside work authorization, location, and language.
+   - **`.venv/bin/python scripts/application.py init --company ... --role ... --url ... [--source-id ...]`** normalizes URLs (stripping tracking parameters) and creates a stable folder `output/applications/<company>-<role>-<hash>/` with `identity.json`, `job.md`, and `status.md`.
+   - Eligibility precedes fit scoring and explicitly tracks **international remote**, **work from the candidate's country of residence**, and **B2B/contractor** status (`confirmed`, `unknown`, `not eligible`) alongside work authorization, location, and language.
    - Applications follow a strict 10-state machine in `status.md` and `tracker/applications.md`: `INBOX`, `EVALUATED`, `DRAFTING`, `IN_REVIEW`, `READY_TO_APPLY`, `APPLIED`, `INTERVIEWING`, `OFFER`, `REJECTED`, `DROPPED`. Opening a form or generating files never sets `APPLIED` — only explicit user confirmation with a submission date does.
 
 4. **Bounded 3-Round Independent Review Cycle & Two-Stage Gate**
-   - **`python3 scripts/review_cycle.py`** (`start`, `snapshot`, `record`, `status`) manages an immutable, lock-protected audit journal under `output/applications/<app>/review-cycles/<cycle>/rounds/<round>/`.
-   - Each round snapshots `cv.md`, `job.md`, `facts.md`, and all underlying source files with SHA-256 manifests, then dispatches a **fresh independent reviewer subagent** (`Task`/`Agent` in Claude Code, a fresh subagent in Codex, or `invoke_subagent` in Antigravity) with defanged `<job_description>` fences.
+   - **`.venv/bin/python scripts/review_cycle.py`** (`start`, `snapshot`, `record`, `status`) manages an immutable, lock-protected audit journal under `output/applications/<app>/review-cycles/<cycle>/rounds/<round>/`.
+   - Each round snapshots `cv.md`, `job.md`, `facts.md`, and all underlying source files with SHA-256 manifests, then dispatches a **fresh independent reviewer subagent** (`Task`/`Agent` in Claude Code, a fresh subagent in Codex, or `invoke_subagent` in Antigravity, or the native subagent tool in other agents) with defanged `<job_description>` fences.
    - The helper enforces at most **3 review rounds per cycle**, requires a distinct `reviewer_id` per round, and invalidates stale snapshots if live inputs change (`exit code 2`).
    - **Two-stage readiness**: after the Markdown text cycle completes, the user reviews the text first. Only then is the CV rendered from Markdown through the shared Typst template (using separate unbulleted experience paragraphs; DOCX is generated only on explicit request) and audited in a separate `final-review.md` before `READY_TO_APPLY`.
 
