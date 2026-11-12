@@ -12,3 +12,5 @@ cryptography==50.0.2
 pdfminer-six==20260107
 pycparser==3.12
 typing-extensions==4.16.0
+markdown-it-py==4.0.0
+mdurl==0.1.2

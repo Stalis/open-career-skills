@@ -1,10 +1,8 @@
 # Export text fidelity check
 
-`scripts/check_export.py` compares final PDF/DOCX text with an approved UTF-8 plain-text transcript. It does not rewrite documents, invoke AI, submit applications, or change status. DOCX uses standard-library OOXML extraction; PDF requires the optional pinned dependency in the project's ignored `.venv/`:
+`scripts/check_export.py` compares final PDF/DOCX text with an approved UTF-8 plain-text transcript. It does not rewrite documents, invoke AI, submit applications, or change status. DOCX uses standard-library OOXML extraction; PDF uses the pinned `pypdf` dependency installed in the project's ignored `.venv/` by `make install`. Run `make doctor` to validate the local setup.
 
-```sh
-uv pip install --python .venv/bin/python --cache-dir tmp/uv-cache -r scripts/requirements-export.txt
-```
+For the default Typst pipeline check the PDF only. Include `--export <file.docx>` as an additional argument only when DOCX was explicitly requested and generated. No internal DOCX is required. Preserve the Typst build manifest alongside the check report; a successful build does not certify candidate approval.
 
 After the candidate checks the CV text, prepare `approved-text.txt` inside the private application folder. It must contain exactly the visible content expected in the export, in intended reading order: headings, name, contacts, dates, skills and experience. Remove Markdown syntax and private editorial notes, but preserve the approved wording and punctuation. Check the transcript against `cv.md`; the helper cannot prove that this manual preparation was faithful. Markdown links must use the visible label; hyperlink targets need separate inspection.
 
@@ -12,7 +10,6 @@ After the candidate checks the CV text, prepare `approved-text.txt` inside the p
 .venv/bin/python scripts/check_export.py \
   --expected output/applications/<application>/approved-text.txt \
   --export output/applications/<application>/cv.pdf \
-  --export output/applications/<application>/cv.docx \
   --report output/applications/<application>/export-check-001.json
 ```
 

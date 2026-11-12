@@ -97,6 +97,15 @@ class WorkspaceCompatTest(unittest.TestCase):
                        'never just a text pass'):
             self.assertIn(phrase, protocol)
 
+    def test_typst_pdf_default_and_optional_docx_align_across_agents(self):
+        for name in ('AGENTS.md', 'CLAUDE.md', 'GEMINI.md', 'docs/CODEX.md', 'docs/REVIEW_CYCLE.md'):
+            text = (ROOT / name).read_text().lower()
+            self.assertIn('typst', text, name)
+            self.assertIn('docx', text, name)
+            self.assertIn('request', text, name)
+        export = (ROOT / 'docs/EXPORT_CHECK.md').read_text()
+        self.assertNotIn('--export output/applications/<application>/cv.docx', export)
+
     def test_gitignore_protects_private_and_local_agent_files(self):
         ignored = [
             'profile/profile.md',

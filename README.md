@@ -66,9 +66,9 @@ flowchart TD
         Record -- "outcome: needs_input (user adds new facts)" --> OptP1
     end
 
-    subgraph FinalGate["6. Handoff, DOCX/PDF Rendering & Final Gate"]
+    subgraph FinalGate["6. Handoff, Typst PDF Rendering & Final Gate"]
         TextHandoff["User inspects reviewed Markdown (passed / plateau / limit_reached)"]
-        Render["Render from documents/templates/*.docx (Unbulleted paragraphs + visual/PDF check)"]
+        Render["cv.md → ResumeDocument → JSON --input → Typst PDF (DOCX only on request)"]
         FinalRev["Fresh Independent Final Review (final-review.md with render hashes)"]
         Ready["State: READY_TO_APPLY (tracker/applications.md + status.md)"]
         Applied["State: APPLIED (Only after explicit user confirmation + submission date)"]
@@ -97,11 +97,11 @@ flowchart TD
    - **`python3 scripts/review_cycle.py`** (`start`, `snapshot`, `record`, `status`) manages an immutable, lock-protected audit journal under `output/applications/<app>/review-cycles/<cycle>/rounds/<round>/`.
    - Each round snapshots `cv.md`, `job.md`, `facts.md`, and all underlying source files with SHA-256 manifests, then dispatches a **fresh independent reviewer subagent** (`Task`/`Agent` in Claude Code, a fresh subagent in Codex, or `invoke_subagent` in Antigravity) with defanged `<job_description>` fences.
    - The helper enforces at most **3 review rounds per cycle**, requires a distinct `reviewer_id` per round, and invalidates stale snapshots if live inputs change (`exit code 2`).
-   - **Two-stage readiness**: after the Markdown text cycle completes, the user reviews the text first. Only then is the CV rendered from the reference template in `documents/templates/` into DOCX/PDF (using separate unbulleted experience paragraphs) and audited in a separate `final-review.md` before `READY_TO_APPLY`.
+   - **Two-stage readiness**: after the Markdown text cycle completes, the user reviews the text first. Only then is the CV rendered from Markdown through the shared Typst template (using separate unbulleted experience paragraphs; DOCX is generated only on explicit request) and audited in a separate `final-review.md` before `READY_TO_APPLY`.
 
 5. **Sandboxed Local Tooling & Verification**
    - **Optional Hirify CLI (`./scripts/hirify`)**: pinned to `hirify-cli` in `package.json`, storing config and credentials strictly inside git-ignored `.hirify/config/` with auto-updates disabled.
-   - **Automated test suite (`python3 -m unittest discover -s tests`)**: 49 deterministic unit tests covering DOCX/XLSX intake, canonical URL & source-ID deduplication, provenance checks, the 3-round review state machine, skill sync, and `.gitignore` privacy guards.
+   - **Automated test suite (`make test`)**: deterministic unit and integration tests covering DOCX/XLSX intake, canonical URL & source-ID deduplication, provenance checks, the 3-round review state machine, skill sync, and `.gitignore` privacy guards.
 
 ---
 
@@ -223,3 +223,13 @@ This repo stands on ideas from two MIT-licensed projects, reimplemented (not cop
 ## License
 
 MIT. "JobMentis" is a trademark of JobMentis; the license covers the prompts and code in this repo, not the brand.
+
+### Build a resume PDF
+
+After `make install` and candidate text approval:
+
+```sh
+.venv/bin/python scripts/build_resume.py output/applications/<identity>/cv.md output/applications/<identity>/work/resume.pdf
+```
+
+The shared [Typst pipeline](docs/TYPST.md) preserves supported Markdown and passes a structured JSON model through `--input`. It requires the licensed local EB Garamond fonts. Review every output page and check text fidelity before final independent review; the command does not change application status. DOCX is optional and produced only on request.

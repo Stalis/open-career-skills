@@ -15,7 +15,7 @@ Follow `docs/FACT_MEMORY.md` for every career workflow: freshly read the shared 
 3. **Source intake & master resumes**: Copy selected original sources via `python3 scripts/intake.py <file>...` into `documents/sources/` and catalog them in `profile/sources.md` and `profile/intake.md`. Maintain `output/master-resumes/backend-fullstack.md` and `output/master-resumes/platform-devops-sre.md` and verify freshness with `python3 scripts/check_master.py`.
 4. **Eligibility, fit score & two hard stops**: Check eligibility (international remote, work from Serbia, B2B/contractor, work authorization, location, language) before weighted fit scoring. For every vacancy-fit evaluation, explicitly report the overall score as `Fit: N/100` in the user-facing response and in `fit-evaluation.md` when saved, including evaluations triggered by `/apply` or natural language. Use the original weighted criteria, normalize to 0–100 if necessary, and briefly explain strengths, gaps and uncertainties. This measures candidate-to-role fit, not offer probability; eligibility restrictions still take precedence. Preserve both mandatory pauses: (a) stop and wait after `fit-evaluation.md` for the decision to draft, and (b) stop and wait after optimizer Phase 1 questions.
 5. **Optional cover letters & paragraph formatting**: Cover letters and ATS answers are drafted only when requested or needed. Final resume experience entries use separate unbulleted paragraphs (bullet points remain acceptable in master resumes). Never write an em dash in generated assets.
-6. **Bounded independent review & rendering**: Follow `docs/REVIEW_CYCLE.md` using `python3 scripts/review_cycle.py` (`start`, `snapshot`, `record`, `status`) with up to 3 text-review rounds using a fresh `application-reviewer` subagent invocation (via the `Task`/`Agent` tool) per round. Hand reviewed Markdown text to the user before DOCX/PDF rendering and `final-review.md`.
+6. **Bounded independent review & rendering**: Follow `docs/REVIEW_CYCLE.md` using `python3 scripts/review_cycle.py` (`start`, `snapshot`, `record`, `status`) with up to 3 text-review rounds using a fresh `application-reviewer` subagent invocation (via the `Task`/`Agent` tool) per round. Hand reviewed Markdown text to the user before Typst PDF rendering (DOCX only on request) and `final-review.md`.
 
 ## Layout and privacy
 
@@ -38,3 +38,7 @@ Follow `docs/FACT_MEMORY.md` for every career workflow: freshly read the shared 
 | Plan or draft LinkedIn 360Brew content | `ocs-linkedin` | `/plan-content`, `.claude/skills/linkedin-360brew-planner/SKILL.md` |
 
 Follow each skill's process and hard stops faithfully, always applying the `docs/CODEX.md` and `docs/REVIEW_CYCLE.md` contract.
+
+## Resume PDF generation
+
+After candidate text approval, use the shared Markdown → `ResumeDocument` → JSON `--input` → Typst pipeline in `docs/TYPST.md`. PDF is the default; DOCX is generated only on explicit user request using the preserved OOXML/LibreOffice path. Use project-local pinned tools, inspect every page, run the PDF text export check, and obtain independent final review. No per-application PDF builder or DOCX intermediate is required. Preserve historical files and reviews.
