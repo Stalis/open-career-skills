@@ -14,12 +14,20 @@ class ApplicationsTest(unittest.TestCase):
         self.tmp.cleanup()
 
     def test_different_roles_and_repeat(self):
-        a = initialize(self.root, 'Example', 'Backend', 'https://jobs.example/1?utm_source=x')
-        b = initialize(self.root, 'Example', 'SRE', 'https://jobs.example/2')
+        a = initialize(self.root, 'Example', 'Backend', 'https://jobs.example/1?utm_source=x', created_date='2026-10-22')
+        b = initialize(self.root, 'Example', 'SRE', 'https://jobs.example/2', created_date='2026-10-27')
         self.assertNotEqual(a, b)
-        self.assertEqual(a, initialize(self.root, 'Example Inc', 'Renamed', 'https://jobs.example/1'))
+        self.assertEqual(a.parent.name, '2026-10-22')
+        self.assertEqual(b.parent.name, '2026-10-27')
+        # Re-initializing on a later date reuses the existing dated folder
+        self.assertEqual(a, initialize(self.root, 'Example Inc', 'Renamed', 'https://jobs.example/1', created_date='2026-11-14'))
         self.assertIn('INBOX', (a / 'status.md').read_text())
+        self.assertIn('Received: 2026-10-22', (a / 'job.md').read_text())
         self.assertIn('unknown', (a / 'job.md').read_text())
+        with self.assertRaises(ValueError):
+            initialize(self.root, 'Example', 'Role', 'https://jobs.example/3', created_date='2026-02-30')
+        with self.assertRaises(ValueError):
+            initialize(self.root, 'Example', 'Role', 'https://jobs.example/3', created_date='not-a-date')
 
     def test_add_source_identity_without_duplicate(self):
         a = initialize(self.root, 'Example', 'Engineer', 'https://jobs.example/1')

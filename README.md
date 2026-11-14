@@ -43,7 +43,7 @@ flowchart TD
         JobInputs["Manual JD / URL, Portals, or ./scripts/hirify"]
         Inbox["tracker/inbox.md (Dedup by canonical URL / source ID)"]
         AppPy["scripts/application.py init"]
-        AppDir["output/applications/<company>-<role>-<hash>/ (identity.json, job.md, status.md)"]
+        AppDir["output/applications/YYYY-MM-DD/<company>-<role>-<hash>/ (identity.json, job.md, status.md)"]
         JobInputs --> Inbox --> AppPy --> AppDir
     end
 
@@ -89,12 +89,12 @@ flowchart TD
    - Two directional master resumes (`output/master-resumes/backend-fullstack.md` and `output/master-resumes/platform-devops-sre.md`) embed SHA-256 hashes of all source files; **`.venv/bin/python scripts/check_master.py`** flags `STALE` inputs before reuse.
 
 3. **Deterministic Application Identity & 10-State Pipeline**
-   - **`.venv/bin/python scripts/application.py init --company ... --role ... --url ... [--source-id ...]`** normalizes URLs (stripping tracking parameters) and creates a stable folder `output/applications/<company>-<role>-<hash>/` with `identity.json`, `job.md`, and `status.md`.
+   - **`.venv/bin/python scripts/application.py init --company ... --role ... --url ... [--source-id ...] [--date YYYY-MM-DD]`** normalizes URLs (stripping tracking parameters) and creates a stable folder `output/applications/YYYY-MM-DD/<company>-<role>-<hash>/` with `identity.json`, `job.md`, and `status.md`.
    - Eligibility precedes fit scoring and explicitly tracks **international remote**, **work from the candidate's country of residence**, and **B2B/contractor** status (`confirmed`, `unknown`, `not eligible`) alongside work authorization, location, and language.
    - Applications follow a strict 10-state machine in `status.md` and `tracker/applications.md`: `INBOX`, `EVALUATED`, `DRAFTING`, `IN_REVIEW`, `READY_TO_APPLY`, `APPLIED`, `INTERVIEWING`, `OFFER`, `REJECTED`, `DROPPED`. Opening a form or generating files never sets `APPLIED` — only explicit user confirmation with a submission date does.
 
 4. **Bounded 3-Round Independent Review Cycle & Two-Stage Gate**
-   - **`.venv/bin/python scripts/review_cycle.py`** (`start`, `snapshot`, `record`, `status`) manages an immutable, lock-protected audit journal under `output/applications/<app>/review-cycles/<cycle>/rounds/<round>/`.
+   - **`.venv/bin/python scripts/review_cycle.py`** (`start`, `snapshot`, `record`, `status`) manages an immutable, lock-protected audit journal under `output/applications/YYYY-MM-DD/<app>/review-cycles/<cycle>/rounds/<round>/`.
    - Each round snapshots `cv.md`, `job.md`, `facts.md`, and all underlying source files with SHA-256 manifests, then dispatches a **fresh independent reviewer subagent** (`Task`/`Agent` in Claude Code, a fresh subagent in Codex, or `invoke_subagent` in Antigravity, or the native subagent tool in other agents) with defanged `<job_description>` fences.
    - The helper enforces at most **3 review rounds per cycle**, requires a distinct `reviewer_id` per round, and invalidates stale snapshots if live inputs change (`exit code 2`).
    - **Two-stage readiness**: after the Markdown text cycle completes, the user reviews the text first. Only then is the CV rendered from Markdown through the shared Typst template (using separate unbulleted experience paragraphs; DOCX is generated only on explicit request) and audited in a separate `final-review.md` before `READY_TO_APPLY`.
@@ -229,7 +229,7 @@ MIT. "JobMentis" is a trademark of JobMentis; the license covers the prompts and
 After `make install` and candidate text approval:
 
 ```sh
-.venv/bin/python scripts/build_resume.py output/applications/<identity>/cv.md output/applications/<identity>/work/resume.pdf
+.venv/bin/python scripts/build_resume.py output/applications/YYYY-MM-DD/<identity>/cv.md output/applications/YYYY-MM-DD/<identity>/work/resume.pdf
 ```
 
 The shared [Typst pipeline](docs/TYPST.md) preserves supported Markdown and passes a structured JSON model through `--input`. It requires the licensed local EB Garamond fonts. Review every output page and check text fidelity before final independent review; the command does not change application status. DOCX is optional and produced only on request.

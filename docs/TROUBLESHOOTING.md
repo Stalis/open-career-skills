@@ -10,7 +10,7 @@ The skill instructs Claude to run read-only `git log` / `gh pr list` directly, b
 
 ## "Where did my CV go?" (nothing printed in the terminal)
 
-By design. Deliverables are written to files; the console gets a summary and the path. Generated CVs, letters, and debriefs live in `output/` (per-application assets in `output/applications/<identity>/`), stories in `story-bank/`, and the application log in `tracker/applications.md`.
+By design. Deliverables are written to files; the console gets a summary and the path. Generated CVs, letters, and debriefs live in `output/` (per-application assets in `output/applications/YYYY-MM-DD/<identity>/`), stories in `story-bank/`, and the application log in `tracker/applications.md`.
 
 ## My profile / stories / tracker don't show up in `git status`
 
@@ -21,7 +21,7 @@ Also by design: the `.gitignore` privacy guard keeps every personal file out of 
 - Stopped right after the evaluation: that's the built-in hard stop; answer "proceed" to continue.
 - No `profile/profile.md`: run `/setup` first.
 - Reviewer refused to review: the orchestrator must pass raw drafts in `<draft_cv>`/`<draft_cover_letter>` tags; re-run `/apply`, don't invoke the reviewer manually.
-- File-write error: the pipeline creates `output/applications/<identity>/` with `.venv/bin/python scripts/application.py init` first; if you see a write failure, check the folder isn't a file and you have disk permissions.
+- File-write error: the pipeline creates `output/applications/YYYY-MM-DD/<identity>/` with `.venv/bin/python scripts/application.py init` first; if you see a write failure, check the folder isn't a file and you have disk permissions.
 
 ## /find-jobs returns few or no results
 

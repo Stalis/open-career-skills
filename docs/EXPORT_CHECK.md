@@ -8,9 +8,9 @@ After the candidate checks the CV text, prepare `approved-text.txt` inside the p
 
 ```sh
 .venv/bin/python scripts/check_export.py \
-  --expected output/applications/<application>/approved-text.txt \
-  --export output/applications/<application>/cv.pdf \
-  --report output/applications/<application>/export-check-001.json
+  --expected output/applications/YYYY-MM-DD/<application>/approved-text.txt \
+  --export output/applications/YYYY-MM-DD/<application>/cv.pdf \
+  --report output/applications/YYYY-MM-DD/<application>/export-check-001.json
 ```
 
 The JSON report contains SHA-256 input fingerprints, extractor/version, complete extracted text and ordered token differences. It contains personal data: keep it in ignored `output/` or `tmp/`. Existing reports are never overwritten. Exit codes: 0 PASS, 1 text differences, 2 extraction/input error. All exports must pass; missing dependencies, unreadable/encrypted PDFs and pages without extractable text cannot produce PASS. Scans receive no OCR.

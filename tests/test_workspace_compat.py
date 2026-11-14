@@ -103,7 +103,8 @@ class WorkspaceCompatTest(unittest.TestCase):
             self.assertIn('docx', text, name)
             self.assertIn('request', text, name)
         export = (ROOT / 'docs/EXPORT_CHECK.md').read_text()
-        self.assertNotIn('--export output/applications/<application>/cv.docx', export)
+        self.assertIn('--export output/applications/YYYY-MM-DD/<application>/cv.pdf', export)
+        self.assertNotIn('--export output/applications/YYYY-MM-DD/<application>/cv.docx', export)
 
     def test_gitignore_protects_private_and_local_agent_files(self):
         ignored = [
@@ -114,7 +115,7 @@ class WorkspaceCompatTest(unittest.TestCase):
             'content/calendar.md',
             'tracker/applications.md',
             'tracker/inbox.md',
-            'output/applications/example/cv.md',
+            'output/applications/2026-11-14/example/cv.md',
             'documents/sources/resume.docx',
             'tmp/scratch.json',
             '.venv/pyvenv.cfg',

@@ -333,6 +333,38 @@ class ReviewCycleTest(unittest.TestCase):
         self.assertEqual(self.status()['round'], 0)
         self.assertEqual(self.snapshot()['round'], 1)
 
+    def test_migrated_legacy_manifest_paths_resolve_under_dated_folder(self):
+        root = self.root.resolve()
+        base = root / 'output' / 'applications'
+        legacy = base / 'legacy-company-role-1234567890abcdef'
+        sibling = base / 'sibling-company-role-abcdef1234567890'
+        legacy.mkdir(parents=True)
+        sibling.mkdir(parents=True)
+        (legacy / 'identity.json').write_text('{"identity": "url:https://jobs.example/legacy"}\n')
+        (legacy / 'cv.md').write_text('# Legacy CV\n')
+        (legacy / 'job.md').write_text('# Legacy JD\n')
+        (legacy / 'facts.md').write_text('Legacy facts\n')
+        (sibling / 'identity.json').write_text('{"identity": "url:https://jobs.example/sibling"}\n')
+        (sibling / 'candidate-answers.md').write_text('Sibling answer\n')
+        profile = root / 'profile' / 'profile.md'
+        rc.start(legacy, root=root)
+        rc.snapshot(legacy, legacy / 'facts.md', [profile, sibling / 'candidate-answers.md'], root=root)
+        self.app = legacy
+        state = rc.inspect(legacy, root=root)
+        receipt = self.receipt()
+        receipt['manifest_sha256'] = state['manifest_sha256']
+        rc.record(legacy, receipt, root=root)
+        dated_parent = base / '2026-10-22'
+        dated_parent.mkdir(parents=True, exist_ok=True)
+        migrated = dated_parent / legacy.name
+        legacy.rename(migrated)
+        sibling_parent = base / '2026-10-28'
+        sibling_parent.mkdir(parents=True, exist_ok=True)
+        sibling.rename(sibling_parent / sibling.name)
+        after = rc.inspect(migrated, root=root)
+        self.assertTrue(after['current'], after['changes'])
+        self.assertEqual(after['manifest_sha256'], state['manifest_sha256'])
+
 
 if __name__ == '__main__':
     unittest.main()

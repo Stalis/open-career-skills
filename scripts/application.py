@@ -12,6 +12,30 @@ from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 ROOT = Path(__file__).resolve().parent.parent
+DATE_RE = re.compile(r'^\d{4}-\d{2}-\d{2}$')
+
+
+def valid_date(value):
+    if value is None:
+        return date.today().isoformat()
+    value = str(value).strip()
+    if not DATE_RE.fullmatch(value):
+        raise ValueError('Date must be in YYYY-MM-DD format')
+    try:
+        date.fromisoformat(value)
+    except ValueError as exc:
+        raise ValueError('Date must be a valid calendar date in YYYY-MM-DD format') from exc
+    return value
+
+
+def iter_identity_files(base):
+    seen = set()
+    for pattern in ('[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/*/identity.json', '*/identity.json'):
+        for path in sorted(base.glob(pattern)):
+            resolved = path.resolve()
+            if resolved not in seen and path.is_file():
+                seen.add(resolved)
+                yield path
 
 
 def canonical_url(value):
@@ -33,9 +57,10 @@ def slug(value):
     return re.sub(r'[^a-z0-9]+', '-', value).strip('-')[:48] or 'role'
 
 
-def initialize(root, company, role, url=None, source_id=None):
+def initialize(root, company, role, url=None, source_id=None, created_date=None):
     if not company.strip() or not role.strip():
         raise ValueError('Company and role are required')
+    day = valid_date(created_date)
     source_id = (source_id or '').strip()
     normalized = canonical_url(url) if url else None
     if not source_id and not normalized:
@@ -46,7 +71,7 @@ def initialize(root, company, role, url=None, source_id=None):
     # Existing metadata also matches either source identifier, avoiding a new folder
     # if a second identifier becomes available later. Ambiguous matches require review.
     matches = []
-    for path in base.glob('*/identity.json'):
+    for path in iter_identity_files(base):
         data = json.loads(path.read_text(encoding='utf-8'))
         if (source_id and data.get('source_id') == source_id) or (normalized and data.get('url') == normalized):
             matches.append((path.parent, data))
@@ -70,12 +95,14 @@ def initialize(root, company, role, url=None, source_id=None):
                 os.unlink(temporary)
         return folder
     digest = hashlib.sha256(identity.encode()).hexdigest()[:16]
-    folder = base / f'{slug(company)}-{slug(role)}-{digest}'
+    day_dir = base / day
+    day_dir.mkdir(parents=True, exist_ok=True)
+    folder = day_dir / f'{slug(company)}-{slug(role)}-{digest}'
     data = {'identity': identity, 'source_id': source_id or None, 'url': normalized}
-    with tempfile.TemporaryDirectory(prefix='.pending-', dir=base) as temporary:
+    with tempfile.TemporaryDirectory(prefix='.pending-', dir=day_dir) as temporary:
         pending = Path(temporary)
         (pending / 'identity.json').write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-        (pending / 'job.md').write_text(f'# Job\n\n- Source URL: {url or "not provided"}\n- Received: {date.today().isoformat()}\n- Coverage: unknown; full text not yet recorded\n\n## Available text\n', encoding='utf-8')
+        (pending / 'job.md').write_text(f'# Job\n\n- Source URL: {url or "not provided"}\n- Received: {day}\n- Coverage: unknown; full text not yet recorded\n\n## Available text\n', encoding='utf-8')
         (pending / 'status.md').write_text('# Status\n\n- State: INBOX\n- Eligibility: unknown\n- Next step: record available job text and coverage\n', encoding='utf-8')
         pending.rename(folder)
     return folder
@@ -89,9 +116,10 @@ def main():
     init.add_argument('--role', required=True)
     init.add_argument('--url')
     init.add_argument('--source-id')
+    init.add_argument('--date', dest='created_date', help='Creation date YYYY-MM-DD (defaults to today; use date_applied for Hirify imports)')
     args = parser.parse_args()
     try:
-        print(initialize(ROOT, args.company, args.role, args.url, args.source_id).relative_to(ROOT))
+        print(initialize(ROOT, args.company, args.role, args.url, args.source_id, args.created_date).relative_to(ROOT))
     except (ValueError, OSError, json.JSONDecodeError) as exc:
         parser.error(str(exc))
 

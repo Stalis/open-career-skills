@@ -7,10 +7,12 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import tempfile
 
 ROOT = Path(__file__).resolve().parent.parent
+DATE_RE = re.compile(r'^\d{4}-\d{2}-\d{2}$')
 SUMMARY_MARKER = '<!-- managed by review_cycle.py; text review only -->'
 OUTCOMES = {'passed', 'revise', 'needs_input', 'plateau', 'review_unavailable', 'incomplete_package'}
 FAILURES = {'review_unavailable', 'incomplete_package'}
@@ -43,8 +45,10 @@ def application(path, root=ROOT):
     root = Path(root).resolve()
     app = Path(path).resolve()
     base = root / 'output' / 'applications'
-    if app.parent != base or not app.is_dir() or not (app / 'identity.json').is_file():
-        raise ValueError('Use an existing application folder directly under output/applications')
+    dated = app.parent.parent == base and bool(DATE_RE.fullmatch(app.parent.name))
+    legacy = app.parent == base and not DATE_RE.fullmatch(app.name)
+    if (not dated and not legacy) or not app.is_dir() or not (app / 'identity.json').is_file():
+        raise ValueError('Use an existing application folder under output/applications/YYYY-MM-DD/<application>')
     if not isinstance(read_json(app / 'identity.json'), dict):
         raise ValueError('Invalid application identity')
     return app
@@ -102,11 +106,28 @@ def summary_allowed(app):
         raise ValueError('Existing review.md is not managed by this helper; preserve it explicitly before starting')
 
 
+def resolve_source(app, source):
+    candidate = app / source
+    if candidate.is_file():
+        return candidate
+    if source.startswith('../') and DATE_RE.fullmatch(app.parent.name):
+        legacy = app.parent / source
+        if legacy.is_file():
+            return legacy
+        parts = Path(source).parts
+        if len(parts) >= 3 and parts[0] == '..' and parts[1] != '..':
+            matches = sorted(app.parent.parent.glob(
+                f'[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/{parts[1]}/' + '/'.join(parts[2:])))
+            if len(matches) == 1 and matches[0].is_file():
+                return matches[0]
+    return candidate
+
+
 def input_changes(app, round_dir):
     manifest = read_json(round_dir / 'manifest.json')
     changes = []
     for item in manifest['inputs']:
-        original = app / item['source']
+        original = resolve_source(app, item['source'])
         snapshot = round_dir / item['snapshot']
         if not snapshot.is_file() or digest(snapshot.read_bytes()) != item['sha256']:
             changes.append(f"snapshot damaged: {item['snapshot']}")

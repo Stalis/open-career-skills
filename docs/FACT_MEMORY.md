@@ -11,7 +11,7 @@ This protocol applies to every career workflow in Codex, Claude Code, Antigravit
 | `profile/sources.md` | Source IDs, original paths and extraction coverage. |
 | `story-bank/*.md` | Detailed project/employer evidence with provenance and limits; link from the profile. |
 
-All candidate-specific entries belong in ignored files. `output/applications/<identity>/candidate-answers.md` and `facts.md` can preserve verbatim answers and review bundles, but are not the shared base. An answer stored only there or only in chat has not been synchronized. The shared entry must contain the reusable factual substance and limitations, not merely a link to an application. Keep the original answer/source link as provenance.
+All candidate-specific entries belong in ignored files. `output/applications/YYYY-MM-DD/<identity>/candidate-answers.md` and `facts.md` can preserve verbatim answers and review bundles, but are not the shared base. An answer stored only there or only in chat has not been synchronized. The shared entry must contain the reusable factual substance and limitations, not merely a link to an application. Keep the original answer/source link as provenance.
 
 ## Read before retrieving or asking
 
@@ -35,7 +35,7 @@ After each candidate reply or selected-source intake, before using the new infor
 
 Before each handoff, final response, mandatory candidate pause, review-package handoff or readiness/status decision, reconcile every candidate reply and selected-source fact processed since the last audit against the saved shared base. Reread the actual saved entries, rather than assuming a successful write means their content is complete. Preserve mandatory pauses: save what is known, then wait; never invent missing answers to finish an audit.
 
-For applications, append a dated check to `output/applications/<identity>/fact-sync-audit.md`. For work without an application, append it to `profile/intake.md`. Include:
+For applications, append a dated check to `output/applications/YYYY-MM-DD/<identity>/fact-sync-audit.md`. For work without an application, append it to `profile/intake.md`. Include:
 
 - Scope: which replies/question IDs or sources were processed and whether coverage was complete or partial.
 - One row per distinct new item: source/answer ID, shared destination and heading/item ID, status/limits, and whether it was newly saved, updated or already present.

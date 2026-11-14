@@ -24,7 +24,7 @@ The workspace strings eight skills into one loop. You can enter anywhere, but th
                     Step 3: REVIEW (independent subagent:
                     groundedness audit + coverage + craft)
                                     |
-                    Step 4: REVISE -> output/applications/<identity>/
+                    Step 4: REVISE -> output/applications/YYYY-MM-DD/<identity>/
                                     |
                     Step 5: TRACK -> tracker/applications.md
                                     |
@@ -44,7 +44,7 @@ The workspace strings eight skills into one loop. You can enter anywhere, but th
 | /mine-evidence | your git repos (read-only), `gh` PRs | `story-bank/*.md` with `## Evidence` |
 | /extract-story | your braindump | `story-bank/*.md` |
 | /find-jobs | profile, `portals.md`, tracker (dedup) | nothing (conversational) |
-| /apply | profile, story bank, the JD | `output/applications/<identity>/{fit-evaluation,cv,review,status}.md` (cover letter only when requested), tracker row |
+| /apply | profile, story bank, the JD | `output/applications/YYYY-MM-DD/<identity>/{fit-evaluation,cv,review,status}.md` (cover letter only when requested), tracker row |
 | /detect-ats | a company name or posting URL; public vendor board APIs | nothing (conversational) |
 | /mock-interview | profile, story bank, tracker, past debriefs | `output/interview-feedback-*.md` |
 | /upskill | all `fit-evaluation.md` files, tracker, profile | `output/upskill-report-*.md` |
